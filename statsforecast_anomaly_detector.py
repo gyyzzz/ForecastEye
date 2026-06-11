@@ -1,20 +1,15 @@
 #!/usr/bin/env python3
 """
-Prometheus + ClickHouse 时序异常检测脚本
+ForecastEye - Prometheus + ClickHouse 时序异常检测脚本
 使用 statsforecast 替代 Google 时序模型方案
 
-适配表结构: monitor.metrics (10.1.62.240)
+适配表结构: monitor.metrics
   - ts: DateTime (时间戳)
-  - nename: String (网元名称: bjclas1bebm)
-  - host: String (主机名: e20260403104438--vm-bjclas1bebm-cl-as-1 等)
-  - metric_name: String (指标名: 28种)
+  - nename: String (网元名称)
+  - host: String (主机名)
+  - metric_name: String (指标名)
   - metric_value: Float64 (指标值)
   - label: String (标签: 网卡名/磁盘名/进程名等)
-
-数据特征:
-  - 采样粒度: ~1分钟
-  - 主机数: 9台 (as-1, as-2, mgr-1, mgr-2, db-1, db-2, db-3, eblb-1, eblb-2)
-  - 指标类型: 28种（系统/网络/磁盘/进程/数据库/Redis/SDC）
 
 依赖:
     pip install statsforecast clickhouse-connect pandas pyyaml
