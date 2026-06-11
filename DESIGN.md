@@ -1,4 +1,4 @@
-# Prometheus + ClickHouse 时序异常检测方案设计
+# ForecastEye - Prometheus + ClickHouse 时序异常检测方案设计
 
 ## 1. 概述
 
@@ -41,16 +41,9 @@
                                                   └──────────────┘
 ```
 
-### 2.2 数据流详解（基于 10.1.62.240 实际数据）
+### 2.2 数据流详解
 
 ```
-实际数据特征:
-  - 网元: bjclas1bebm (1个)
-  - 主机: 9台 (as-1, as-2, mgr-1, mgr-2, db-1~3, eblb-1~2)
-  - 指标: 28种（系统/网络/磁盘/TCP/进程/数据库/Redis/SDC）
-  - 采样粒度: ~1分钟
-  - 数据范围: 3.5天 (数据不足7天，无法使用周周期)
-
 1. Prometheus 定期采集指标 → monitor.metrics (ClickHouse)
    - 表结构: ts, nename, host, metric_name, metric_value, label
    
@@ -127,8 +120,8 @@ ORDER BY (nename, host, metric_name, timestamp);
 
 **unique_id 构建规则**:
 ```
-unique_id = concat(nename, '_', host, '_', metric_name, '_', label)
-示例: NFV-彩铃-01_host01_cpu_usage_default
+unique_id = concat(nename, '#', host, '#', metric_name, '#', label)
+示例: nename#hostname#cpu_utilization#default
 ```
 
 ---
@@ -144,7 +137,7 @@ unique_id = concat(nename, '_', host, '_', metric_name, '_', label)
 | AutoARIMA | 自回归场景 | ★★★ | 手动配置 | ★★★ |
 | SeasonalNaive | 简单快速检测 | ★★★★★ | 单周期 | ★★★ |
 
-### 4.2 NFV彩铃系统推荐配置
+### 4.2 推荐配置
 
 **CPU/内存使用率**（日周期 + 周周期，工作日/周末差异）
 ```yaml
@@ -315,7 +308,7 @@ actions:
 -- 使用分区过滤（加速查询）
 SELECT ... FROM monitor.metrics
 WHERE ts >= now() - INTERVAL 168 HOUR
-  AND nename = 'NFV-彩铃-01'  -- 按排序键过滤
+  AND nename = 'your-nename'  -- 按排序键过滤
 ```
 
 ### 8.2 批量处理
