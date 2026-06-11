@@ -1,0 +1,43 @@
+# ForecastEye - Prometheus + ClickHouse 时序异常检测配置示例
+# 复制此文件为 config.yaml 并修改实际配置
+
+# ClickHouse 连接配置
+clickhouse:
+  host: 'your-clickhouse-host'
+  port: 8123                           # HTTP 端口（clickhouse-connect 使用 HTTP）
+  username: 'default'
+  password: 'your-password'
+  database: 'monitor'
+
+# 数据查询配置
+query:
+  table: 'metrics'
+  lookback_hours: 24                   # 回溯时间（小时）
+  filter: ""                           # 可选：过滤条件，如 "AND metric_name IN ('cpu_utilization', 'memory_usage_percent')"
+
+# 异常检测模型配置
+# 关键：写入增量(write_increment)必须与定时运行频率匹配，避免重叠
+# 例如：每5分钟运行 → write_increment=5；每10分钟运行 → write_increment=10
+model:
+  type: 'SeasonalNaive'                # 模型类型: SeasonalNaive, MSTL, AutoETS, AutoARIMA
+  freq: '1min'                         # 采样频率
+  season_length: [1440]                # 季节周期（1440分钟 = 1天）
+  forecast_horizon: 10                 # 检测窗口：预测的点数
+  write_increment: 5                   # 实际写入：只写后N个点（新增区间）
+  confidence_level: [95]               # 置信区间
+  n_jobs: 4                            # 并行数
+
+# 异常判定阈值
+threshold:
+  score_threshold: 1.5                 # 异常分数阈值（>1.5 为异常）
+  min_samples: 50                      # 最小样本数（少于此值跳过检测）
+
+# 输出配置
+output:
+  table: 'anomaly_detection_results'   # 结果表名
+
+# 可选：告警配置（未来扩展）
+# alert:
+#   enabled: false
+#   webhook_url: ''
+#   score_threshold: 2.0
